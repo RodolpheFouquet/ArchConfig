@@ -1,0 +1,124 @@
+- hosts: localhost
+  vars:
+    user: vachicorne
+    aur_builder: aur_builder
+  vars_files:
+    - variables.yml
+  become: true
+  tasks:
+  - name: Add Vachicorne user
+    ansible.builtin.user:
+      name:  "{{ user }}"
+      password: "{{ password| password_hash('sha512', salt) }}"
+      group: wheel
+      shell: /usr/bin/fish
+  - name: Add AUR Builder user
+    ansible.builtin.user:
+      name: "{{ aur_builder }}"
+  - name: Add AUR builder to sudoers
+    ansible.builtin.lineinfile:
+      path: /etc/sudoers.d/aur_builder-allow-to-sudo-pacman
+      state: present
+      line: "aur_builder ALL=(ALL) NOPASSWD: /usr/bin/pacman"
+      validate: /usr/sbin/visudo -cf %s
+      create: yes
+  - name: Full system upgrade
+    community.general.pacman:
+      update_cache: true
+      upgrade: true
+  - name: Install Git
+    community.general.pacman:
+      name: git
+      state: present
+  - name: Download hyprdots 
+    become: yes
+    become_user: "{{ user }}"
+    ansible.builtin.git:
+      repo: https://github.com/prasanthrangan/hyprdots.git
+      dest: "/home/{{ user }}/hyprdots"
+      depth: 1
+      update: yes
+  - name: Restrore hyprdots
+    ansible.builtin.command: ./install.sh -r
+    become: yes
+    become_user: "{{ user }}"
+    args: 
+      chdir: "/home/{{ user }}/hyprdots/Scripts" 
+  - name: Copy hyprland config
+    ansible.builtin.copy:
+      src: assets/hyprland.conf
+      dest: "/home/{{ user}}/.config/hypr/hyprland.conf"
+      owner: "{{ user }}"
+      group: "{{ user }}"
+      mode: '0644'
+  - name: Copy nvidia config file
+    ansible.builtin.copy:
+      src: assets/nvidia.conf
+      dest: "/home/{{ user}}/.config/hypr/nvidia.conf"
+      owner: "{{ user }}"
+      group: "{{ user }}"
+      mode: '0644'
+  - name: Install user packages
+    community.general.pacman:
+      name:
+        - unzip
+        - vi
+        - less
+        - neovim
+        - steam
+        - discord
+        - rust-analyzer
+        - btop
+        - bat
+        - rust
+        - nodejs
+        - npm
+        - dotnet-sdk
+        - dotnet-runtime
+        - aspnet-runtime
+        - go
+        - luarocks
+        - jdk-openjdk
+        - ruby
+        - ruby-irb
+        - rubygems
+        - php
+        - composer
+        - github-cli
+        - python-pip
+        - python-pynvim 
+        - ripgrep
+        - fd
+        - gpac
+        - cpanminus
+        - starship
+      state: present
+  - name: Install AUR packages
+    become: yes
+    become_user: "{{ user }}"
+    kewlfft.aur.aur:
+      use: paru
+      name:
+        - spotify
+        - zoom
+        - vmware-horizon-client
+        - orca-slicer-bin
+        - julia-bin
+  - name: Download neovim files 
+    become: yes
+    become_user: "{{ user }}"
+    ansible.builtin.git:
+      repo: https://github.com/RodolpheFouquet/nvim-conf.git
+      dest: "/home/{{ user }}/.config/nvim"
+      depth: 1
+      update: yes
+  - name: Install neovim node.js package globally.
+    community.general.npm:
+      name: neovim
+      global: true
+  - name: Copy fish config
+    ansible.builtin.copy:
+      src: assets/config.fish
+      dest: "/home/{{ user}}/.config/fish/config.fish"
+      owner: "{{ user }}"
+      group: "{{ user }}"

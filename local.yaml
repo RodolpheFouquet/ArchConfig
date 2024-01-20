@@ -58,6 +58,13 @@
       owner: "{{ user }}"
       group: "{{ user }}"
       mode: '0644'
+  - name: Copy keybindings config file
+    ansible.builtin.copy:
+      src: assets/keybindings.conf
+      dest: "/home/{{ user}}/.config/hypr/keybindings.conf"
+      owner: "{{ user }}"
+      group: "{{ user }}"
+      mode: '0644'
   - name: Install user packages
     community.general.pacman:
       name:
@@ -104,6 +111,8 @@
         - vmware-horizon-client
         - orca-slicer-bin
         - julia-bin
+        - skypeforlinux-stable-bin
+        - proton-vpn-gtk-app
   - name: Download neovim files 
     become: yes
     become_user: "{{ user }}"
@@ -122,3 +131,14 @@
       dest: "/home/{{ user}}/.config/fish/config.fish"
       owner: "{{ user }}"
       group: "{{ user }}"
+      mode: '0644'
+  - name: Update logind.conf
+    ansible.builtin.copy:
+      src: assets/logind.conf
+      dest: /etc/systemd/logind.conf
+      mode: '0644'
+  - name: Reload systemd logind service
+    ansible.builtin.systemd_service:
+      state: restarted
+      daemon_reload: true
+      name: systemd-logind

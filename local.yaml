@@ -38,12 +38,7 @@
       dest: "/home/{{ user }}/hyprdots"
       depth: 1
       update: yes
-  - name: Restrore hyprdots
-    ansible.builtin.command: ./install.sh -r
-    become: yes
-    become_user: "{{ user }}"
-    args: 
-      chdir: "/home/{{ user }}/hyprdots/Scripts" 
+    notify: Restore hyperdots
   - name: Copy hyprland config
     ansible.builtin.copy:
       src: assets/hyprland.conf
@@ -99,6 +94,8 @@
         - gpac
         - cpanminus
         - starship
+        - gamemode
+        - lib32-gamemode
       state: present
   - name: Install AUR packages
     become: yes
@@ -137,8 +134,17 @@
       src: assets/logind.conf
       dest: /etc/systemd/logind.conf
       mode: '0644'
+    notify: Reload systemd logind service
+  
+  handlers:
   - name: Reload systemd logind service
     ansible.builtin.systemd_service:
       state: restarted
       daemon_reload: true
       name: systemd-logind
+  - name: Restore hyprdots
+    ansible.builtin.command: ./install.sh -r
+    become: yes
+    become_user: "{{ user }}"
+    args: 
+      chdir: "/home/{{ user }}/hyprdots/Scripts" 

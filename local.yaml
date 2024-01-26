@@ -30,36 +30,6 @@
     community.general.pacman:
       name: git
       state: present
-  - name: Download hyprdots 
-    become: yes
-    become_user: "{{ user }}"
-    ansible.builtin.git:
-      repo: https://github.com/prasanthrangan/hyprdots.git
-      dest: "/home/{{ user }}/hyprdots"
-      depth: 1
-      update: yes
-    notify: Restore hyperdots
-  - name: Copy hyprland config
-    ansible.builtin.copy:
-      src: assets/hyprland.conf
-      dest: "/home/{{ user}}/.config/hypr/hyprland.conf"
-      owner: "{{ user }}"
-      group: "{{ user }}"
-      mode: '0644'
-  - name: Copy nvidia config file
-    ansible.builtin.copy:
-      src: assets/nvidia.conf
-      dest: "/home/{{ user}}/.config/hypr/nvidia.conf"
-      owner: "{{ user }}"
-      group: "{{ user }}"
-      mode: '0644'
-  - name: Copy keybindings config file
-    ansible.builtin.copy:
-      src: assets/keybindings.conf
-      dest: "/home/{{ user}}/.config/hypr/keybindings.conf"
-      owner: "{{ user }}"
-      group: "{{ user }}"
-      mode: '0644'
   - name: Install user packages
     community.general.pacman:
       name:
@@ -95,8 +65,16 @@
         - cpanminus
         - starship
         - gamemode
+        - mangohud
         - lib32-gamemode
         - piper
+        - obsidian
+        - syncthing
+        - xdg-desktop-portal-gtk
+        - plasma
+        - plasma-meta
+        - plasma-wayland-session
+        - kde-applications-meta
       state: present
   - name: Install ratbagd
     community.general.pacman:
@@ -117,6 +95,8 @@
         - julia-bin
         - skypeforlinux-stable-bin
         - proton-vpn-gtk-app
+        - spicetify-cli
+        - syncthingtray-qt6
   - name: Download neovim files 
     become: yes
     become_user: "{{ user }}"
@@ -142,7 +122,16 @@
       dest: /etc/systemd/logind.conf
       mode: '0644'
     notify: Reload systemd logind service
-  
+  - name: start syncthing service
+    ansible.builtin.systemd_service:
+      state: started
+      name: "syncthing@{{ user }}"
+  - name: Fix obsidian for wayland
+    ansible.builtin.copy:
+      src: assets/obsidian.desktop
+      dest: "/usr/share/applications/obsidian.desktop"
+      mode: '0644'
+
   handlers:
   - name: Reload dbus
     ansible.builtin.systemd_service:
@@ -154,9 +143,3 @@
       state: restarted
       daemon_reload: true
       name: systemd-logind
-  - name: Restore hyprdots
-    ansible.builtin.command: ./install.sh -r
-    become: yes
-    become_user: "{{ user }}"
-    args: 
-      chdir: "/home/{{ user }}/hyprdots/Scripts" 

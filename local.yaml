@@ -68,13 +68,15 @@
         - mangohud
         - lib32-gamemode
         - piper
+        - fish
         - obsidian
+        - kitty
         - syncthing
-        - xdg-desktop-portal-gtk
-        - plasma
-        - plasma-meta
-        - plasma-wayland-session
-        - kde-applications-meta
+        - noto-fonts-emoji
+        - gst-plugins-bad
+        - gst-plugins-ugly
+        - gst-libav
+        - ttf-jetbrains-mono-nerd 
       state: present
   - name: Install ratbagd
     community.general.pacman:
@@ -82,20 +84,26 @@
         - libratbag
       state: present
     notify: Reload dbus
+  - name: Install Paru
+    become: yes
+    become_user: "{{ user }}"
+    kewlfft.aur.aur:
+      name: paru
+      use: makepkg
+      state: present
   - name: Install AUR packages
     become: yes
     become_user: "{{ user }}"
     kewlfft.aur.aur:
       use: paru
       name:
-        - spotify
         - zoom
+        - bambustudio-bin
         - vmware-horizon-client
         - orca-slicer-bin
         - julia-bin
         - skypeforlinux-stable-bin
         - proton-vpn-gtk-app
-        - spicetify-cli
         - syncthingtray-qt6
   - name: Download neovim files 
     become: yes
@@ -109,6 +117,10 @@
     community.general.npm:
       name: neovim
       global: true
+  - name: Creates fish config directory
+    ansible.builtin.file:
+      path: "/home/{{ user }}/.config/fish" 
+      state: directory
   - name: Copy fish config
     ansible.builtin.copy:
       src: assets/config.fish
@@ -116,21 +128,24 @@
       owner: "{{ user }}"
       group: "{{ user }}"
       mode: '0644'
-  - name: Update logind.conf
+  - name: Copy konsole color config
     ansible.builtin.copy:
-      src: assets/logind.conf
-      dest: /etc/systemd/logind.conf
+      src: assets/mocha.colorscheme
+      dest: "/home/{{ user}}/.local/share/konsole/mocha.colorscheme"
+      owner: "{{ user }}"
+      group: "{{ user }}"
       mode: '0644'
-    notify: Reload systemd logind service
+  - name: Copy konsole profile
+    ansible.builtin.copy:
+      src: assets/Vachicorne.profile
+      dest: "/home/{{ user}}/.local/share/konsole/vachicorne.profile"
+      owner: "{{ user }}"
+      group: "{{ user }}"
+      mode: '0644'
   - name: start syncthing service
     ansible.builtin.systemd_service:
       state: started
       name: "syncthing@{{ user }}"
-  - name: Fix obsidian for wayland
-    ansible.builtin.copy:
-      src: assets/obsidian.desktop
-      dest: "/usr/share/applications/obsidian.desktop"
-      mode: '0644'
 
   handlers:
   - name: Reload dbus
@@ -138,8 +153,3 @@
       state: restarted
       daemon_reload: true
       name: dbus
-  - name: Reload systemd logind service
-    ansible.builtin.systemd_service:
-      state: restarted
-      daemon_reload: true
-      name: systemd-logind

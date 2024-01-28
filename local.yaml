@@ -1,6 +1,7 @@
 - hosts: localhost
   vars:
     user: vachicorne
+    sddm_theme: catppuccin-mocha
     aur_builder: aur_builder
   vars_files:
     - variables.yml
@@ -77,6 +78,12 @@
         - gst-plugins-ugly
         - gst-libav
         - ttf-jetbrains-mono-nerd 
+        - qt5-graphicaleffects
+        - qt5-svg
+        - qt5-quickcontrols2
+        - bluez
+        - bluez-utils
+        - sddm-kcm
       state: present
   - name: Install ratbagd
     community.general.pacman:
@@ -105,6 +112,7 @@
         - skypeforlinux-stable-bin
         - proton-vpn-gtk-app
         - syncthingtray-qt6
+        - archlinux-themes-sddm
   - name: Download neovim files 
     become: yes
     become_user: "{{ user }}"
@@ -121,6 +129,7 @@
     ansible.builtin.file:
       path: "/home/{{ user }}/.config/fish" 
       state: directory
+      mode: '0755'
   - name: Copy fish config
     ansible.builtin.copy:
       src: assets/config.fish
@@ -145,7 +154,44 @@
   - name: start syncthing service
     ansible.builtin.systemd_service:
       state: started
+      enabled: true
       name: "syncthing@{{ user }}"
+  - name: Download kde theme 
+    become: yes
+    become_user: "{{ user }}"
+    ansible.builtin.git:
+      repo: https://github.com/catppuccin/kde
+      dest: "/home/{{ user }}/catppucin-kde"
+      depth: 1
+      update: yes
+  - name: Download sddm theme 
+    become: yes
+    become_user: "{{ user }}"
+    ansible.builtin.git:
+      repo: https://github.com/catppuccin/sddm
+      dest: "/home/{{ user }}/catppucin-sddm"
+      depth: 1
+      update: yes
+  - name: Copy sddm theme
+    ansible.builtin.copy:
+      src: "/home/{{ user }}/catppucin-sddm/src/{{ sddm_theme }}"
+      dest: "/usr/share/sddm/themes/"
+      mode: '0755'
+  - name: Creates sddm config dir
+    ansible.builtin.file:
+      path: "/etc/sddm.conf.d" 
+      state: directory
+      mode: '0755'
+  - name: Enable sddm theme
+    ansible.builtin.template:
+      src: assets/sddm.j2
+      dest: /etc/sddm.conf.d/theme.conf
+      mode: '0644'
+  - name: start bluetooth service
+    ansible.builtin.systemd_service:
+      state: started
+      enabled: true
+      name: "bluetooth"
 
   handlers:
   - name: Reload dbus

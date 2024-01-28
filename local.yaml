@@ -192,6 +192,30 @@
       state: started
       enabled: true
       name: "bluetooth"
+  - name: Download kitty theme 
+    become: yes
+    become_user: "{{ user }}"
+    ansible.builtin.git:
+      repo: https://github.com/catppuccin/kitty
+      dest: "/home/{{ user }}/kitty"
+      depth: 1
+      update: yes
+  - name: Creates kitty theme directory
+    become: yes
+    become_user: "{{ user }}"
+    ansible.builtin.file:
+      path: "/home/{{ user }}/.config/kitty/themes" 
+      state: directory
+      mode: '0755'
+  - name: Copy kitty theme
+    ansible.builtin.copy:
+      src: "/home/{{ user }}/kitty/themes/"
+      dest: "/home/{{ user }}/.config/kitty/themes" 
+      mode: '0644'
+  - name: Update kitty theme
+    become: yes
+    become_user: "{{ user }}"
+    ansible.builtin.command: kitty +kitten themes --reload-in=all Catppuccin-Mocha
 
   handlers:
   - name: Reload dbus

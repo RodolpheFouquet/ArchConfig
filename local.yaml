@@ -84,6 +84,13 @@
         - bluez
         - bluez-utils
         - sddm-kcm
+        - cups
+        - cups-pdf
+        - print-manager
+        - system-config-printer
+        - avahi
+        - nss-mdns
+        - nvidia-settings
       state: present
   - name: Install ratbagd
     community.general.pacman:
@@ -212,11 +219,32 @@
       src: "/home/{{ user }}/kitty/themes/"
       dest: "/home/{{ user }}/.config/kitty/themes" 
       mode: '0644'
-  - name: Update kitty theme
-    become: yes
-    become_user: "{{ user }}"
-    ansible.builtin.command: kitty +kitten themes --reload-in=all Catppuccin-Mocha
-
+  - name: start cups service
+    ansible.builtin.systemd_service:
+      state: started
+      enabled: true
+      name: "cups"
+  - name: start avahi service
+    ansible.builtin.systemd_service:
+      state: started
+      enabled: true
+      name: "avahi-daemon"
+  - name: Copy nvidia config
+    ansible.builtin.copy:
+      src: assets/nvidia-power-management.conf
+      dest: "/etc/modprobe.d/nvidia-power-management.conf"
+      mode: '0644'
+  - name: Copy bootloader config
+    ansible.builtin.copy:
+      src: assets/linux.conf
+      dest: "/boot/loader/entries/linux.conf"
+      mode: '0755'
+  - name: Copy bootloader fallback config
+    ansible.builtin.copy:
+      src: assets/linux-fallback.conf
+      dest: "/boot/loader/entries/linux-fallback.conf"
+      mode: '0755'
+  
   handlers:
   - name: Reload dbus
     ansible.builtin.systemd_service:

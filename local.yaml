@@ -1,7 +1,6 @@
 - hosts: localhost
   vars:
     user: vachicorne
-    sddm_theme: catppuccin-frappe
     aur_builder: aur_builder
   vars_files:
     - variables.yml
@@ -78,12 +77,8 @@
         - gst-plugins-ugly
         - gst-libav
         - ttf-jetbrains-mono-nerd 
-        - qt5-graphicaleffects
-        - qt5-svg
-        - qt5-quickcontrols2
         - bluez
         - bluez-utils
-        - sddm-kcm
         - cups
         - cups-pdf
         - print-manager
@@ -94,6 +89,15 @@
         - spectacle
         - wireguard-tools
         - zellij
+        - neofetch
+        - gnome
+        - gnome-extra
+        - gvfs-goa
+        - gnome-shell-extension-arc-menu
+        - gdm
+        - libgtop
+        - lm_sensors
+        - plank
       state: present
   - name: Install ratbagd
     community.general.pacman:
@@ -123,9 +127,12 @@
         - julia-bin
         - skypeforlinux-stable-bin
         - proton-vpn-gtk-app
-        - syncthingtray-qt6
         - archlinux-themes-sddm
         - bottles
+        - catppuccin-gtk-theme-frappe
+        - gnome-shell-extension-pop-shell
+        - gnome-shell-extension-tray-icons
+        - gnome-shell-extension-vitals-git
   - name: Download neovim files 
     become: yes
     become_user: "{{ user }}"
@@ -162,56 +169,16 @@
       owner: "{{ user }}"
       group: "{{ user }}"
       mode: '0644'
-  - name: Copy konsole color config
-    ansible.builtin.copy:
-      src: assets/mocha.colorscheme
-      dest: "/home/{{ user}}/.local/share/konsole/mocha.colorscheme"
-      owner: "{{ user }}"
-      group: "{{ user }}"
-      mode: '0644'
-  - name: Copy konsole profile
-    ansible.builtin.copy:
-      src: assets/Vachicorne.profile
-      dest: "/home/{{ user}}/.local/share/konsole/vachicorne.profile"
-      owner: "{{ user }}"
-      group: "{{ user }}"
-      mode: '0644'
-  - name: start syncthing service
+  - name: start syncthing servicew
     ansible.builtin.systemd_service:
       state: started
       enabled: true
       name: "syncthing@{{ user }}"
-  - name: Download kde theme 
-    become: yes
-    become_user: "{{ user }}"
-    ansible.builtin.git:
-      repo: https://github.com/catppuccin/kde
-      dest: "/home/{{ user }}/catppucin-kde"
-      depth: 1
-      update: yes
-  - name: Download sddm theme 
-    become: yes
-    become_user: "{{ user }}"
-    ansible.builtin.git:
-      repo: https://github.com/catppuccin/sddm
-      dest: "/home/{{ user }}/catppucin-sddm"
-      depth: 1
-      update: yes
-  - name: Copy sddm theme
-    ansible.builtin.copy:
-      src: "/home/{{ user }}/catppucin-sddm/src/{{ sddm_theme }}"
-      dest: "/usr/share/sddm/themes/"
-      mode: '0755'
-  - name: Creates sddm config dir
-    ansible.builtin.file:
-      path: "/etc/sddm.conf.d" 
-      state: directory
-      mode: '0755'
-  - name: Enable sddm theme
-    ansible.builtin.template:
-      src: assets/sddm.j2
-      dest: /etc/sddm.conf.d/theme.conf
-      mode: '0644'
+  - name: start gdm service
+    ansible.builtin.systemd_service:
+      state: started
+      enabled: true
+      name: "gdm"
   - name: start bluetooth service
     ansible.builtin.systemd_service:
       state: started
@@ -267,6 +234,19 @@
       name: vm.max_map_count
       value: '2147483642'
       reload: true
+  - name: Download plank theme 
+    become: yes
+    become_user: "{{ user }}"
+    ansible.builtin.git:
+      repo: https://github.com/catppuccin/plank
+      dest: "/home/{{ user }}/plank"
+      depth: 1
+      update: yes
+  - name: Copy plank theme
+    ansible.builtin.copy:
+      src: "/home/{{ user }}/plank/src/"
+      dest: "/home/{{ user }}/.local/share/plank/themes" 
+      mode: '0644'
 
   handlers:
   - name: Reload dbus

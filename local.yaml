@@ -1,7 +1,7 @@
 - hosts: localhost
   vars:
     user: vachicorne
-    sddm_theme: catppuccin-mocha
+    sddm_theme: catppuccin-frappe
     aur_builder: aur_builder
   vars_files:
     - variables.yml
@@ -91,6 +91,9 @@
         - avahi
         - nss-mdns
         - nvidia-settings
+        - spectacle
+        - wireguard-tools
+        - zellij
       state: present
   - name: Install ratbagd
     community.general.pacman:
@@ -114,12 +117,15 @@
         - zoom
         - bambustudio-bin
         - vmware-horizon-client
+        - vmware-horizon-rtav
+        - zoom-vmware-plugin
         - orca-slicer-bin
         - julia-bin
         - skypeforlinux-stable-bin
         - proton-vpn-gtk-app
         - syncthingtray-qt6
         - archlinux-themes-sddm
+        - bottles
   - name: Download neovim files 
     become: yes
     become_user: "{{ user }}"
@@ -132,6 +138,18 @@
     community.general.npm:
       name: neovim
       global: true
+  - name: Creates zellij config directory
+    ansible.builtin.file:
+      path: "/home/{{ user }}/.config/zellij" 
+      state: directory
+      mode: '0755'
+  - name: Copy zellij config
+    ansible.builtin.copy:
+      src: assets/zellij.kdl
+      dest: "/home/{{ user}}/.config/zellij/config.kdl"
+      owner: "{{ user }}"
+      group: "{{ user }}"
+      mode: '0644'
   - name: Creates fish config directory
     ansible.builtin.file:
       path: "/home/{{ user }}/.config/fish" 
@@ -244,7 +262,12 @@
       src: assets/linux-fallback.conf
       dest: "/boot/loader/entries/linux-fallback.conf"
       mode: '0755'
-  
+  - name: Configure for game compatibility
+    ansible.posix.sysctl:
+      name: vm.max_map_count
+      value: '2147483642'
+      reload: true
+
   handlers:
   - name: Reload dbus
     ansible.builtin.systemd_service:

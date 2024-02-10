@@ -85,6 +85,7 @@
         - system-config-printer
         - avahi
         - nss-mdns
+        - nvidia-dkms
         - nvidia-settings
         - spectacle
         - wireguard-tools
@@ -98,6 +99,20 @@
         - libgtop
         - lm_sensors
         - plank
+        - vlc
+        - libreoffice-fresh
+        - timeshift
+        - taskwarrior-tui
+        - vit
+        - xf86-input-libinput
+        - yt-dlp
+        - ntfsprogs
+        - dosfstools
+        - bind
+        - nvidia-prime
+        - mesa-utils
+        - switcheroo-control
+        - nvidia-utils
       state: present
   - name: Install ratbagd
     community.general.pacman:
@@ -119,6 +134,7 @@
       use: paru
       name:
         - zoom
+        - teams
         - bambustudio-bin
         - vmware-horizon-client
         - vmware-horizon-rtav
@@ -131,8 +147,8 @@
         - bottles
         - catppuccin-gtk-theme-frappe
         - gnome-shell-extension-pop-shell
-        - gnome-shell-extension-tray-icons
         - gnome-shell-extension-vitals-git
+        - gdm-settings
   - name: Download neovim files 
     become: yes
     become_user: "{{ user }}"
@@ -184,6 +200,23 @@
       state: started
       enabled: true
       name: "bluetooth"
+  - name: start switcheroo service
+    ansible.builtin.systemd_service:
+      state: started
+      enabled: true
+      name: "switcheroo-control"
+  - name: start nvidia-hibernate service
+    ansible.builtin.systemd_service:
+      enabled: true
+      name: "nvidia-hibernate"
+  - name: start nvidia-suspend service
+    ansible.builtin.systemd_service:
+      enabled: true
+      name: "nvidia-suspend"
+  - name: start nvidia-resume service
+    ansible.builtin.systemd_service:
+      enabled: true
+      name: "nvidia-resume"
   - name: Download kitty theme 
     become: yes
     become_user: "{{ user }}"
